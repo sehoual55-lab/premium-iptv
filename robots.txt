@@ -1,0 +1,20 @@
+# Premium IPTV — robots.txt
+# Remplacez www.premium-iptv.website par votre domaine réel (1 seule ligne, tout en bas)
+
+User-agent: *
+Allow: /
+
+# Rien à cacher : le site est une page unique
+Disallow: /404.html
+
+# Bots d'aspiration / scrapers agressifs
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+Sitemap: https://www.premium-iptv.website/sitemap.xml
