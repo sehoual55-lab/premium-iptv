@@ -1,0 +1,14 @@
+{
+  "name": "premium-iptv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site vitrine Premium IPTV — page unique statique, prêt pour Vercel.",
+  "type": "module",
+  "scripts": {
+    "domain": "node scripts/set-domain.mjs",
+    "dev": "npx --yes serve public -l 3000",
+    "start": "npx --yes serve public -l 3000"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}
