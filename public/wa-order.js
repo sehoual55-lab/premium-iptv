@@ -29,6 +29,11 @@
   function isBuy(el) {
     var t = txt(el) || el.value || "";
     var h = el.getAttribute && (el.getAttribute("href") || "");
+    if (/^(mailto:|tel:|sms:)/i.test(h || "") || ((h === "/" || /^\/(index\.html)?$/.test(h || "")) && !BUY.test((el.getAttribute("aria-label") || "") + " " + t.replace(/subscribe ?iptv|iptv ?subscribe/ig, "")))) return false;
+    if (el.closest && el.closest("[class*=logo],a.brand,.navbar-brand,[class*=site-brand],[class*=nav-brand]") && !el.closest("[class*=card],[class*=plan],[class*=pric]")) return false;
+    if (el.hasAttribute && (el.hasAttribute("aria-expanded") || el.hasAttribute("aria-controls"))) return false;
+    if (el.closest && el.closest("summary,details,[class*=faq],[id*=faq],[class*=accordion],[class*=Faq],[class*=Accordion]")) return false;
+    if (t.length > 42 && !/checkout|wa\.me|commande|order/i.test(h || "")) return false;
     if (/conn|screen|ecran|écran|device|minus|plus|qty|decrement|increment|step/i.test(el.className || "") && t.length < 4) return false;
     if (t.length <= 2 && !/^(https?:|\/|\.)/.test(h || "")) return false;
     if (/^#(pricing|prices|price|plans?|tarifs?|prix|preise|precos|pre\u00e7os|offres?|offers?|abonnements?|packages?|subscriptions?|formules?|pakete?)\b/i.test(h || "") && !el.hasAttribute("data-plan") && !el.hasAttribute("data-plan-name")) return false;
