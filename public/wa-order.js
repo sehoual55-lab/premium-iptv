@@ -1,4 +1,4 @@
-/* wa-order.js — Buy buttons go straight to WhatsApp with plan + connections (2026-10-27) */
+/* wa-order.js v9 (2026-10-31) — plan "Buy" buttons open the checkout page (/checkout/?pack=…&n=…); WhatsApp links stay WhatsApp. */
 (function () {
   "use strict";
   var DEFAULT_WA = "447412836986";
@@ -80,7 +80,17 @@
     return null;
   }
   function connections(card, href) {
-    var scopes = [card, document];
+    var own = connIn(card, href, [card]);
+    if (own) return own;
+    var cl = card.cloneNode(true), lis = cl.querySelectorAll("li,ul,ol");
+    for (var r = 0; r < lis.length; r++) if (lis[r].parentNode) lis[r].parentNode.removeChild(lis[r]);
+    var tw = document.createTreeWalker(cl, 4), parts = [];
+    while (tw.nextNode()) parts.push(tw.currentNode.nodeValue);
+    var tm = parts.join(" ").replace(/\s+/g, " ").match(/(\d+)\s*(devices?|screens?|connections?|connexions?|\u00e9crans?|ecrans?|verbindung(en)?|ger\u00e4te?|conexi\u00f3n|conexiones|conex\u00e3o|conex\u00f5es|connessioni|connessione|apparaten|apparaat)\b/i);
+    if (tm && parseInt(tm[1], 10) <= 10) return parseInt(tm[1], 10);
+    return connIn(card, href, [document]) || 1;
+  }
+  function connIn(card, href, scopes) {
     for (var k = 0; k < scopes.length; k++) {
       var root = scopes[k];
       var s = { querySelector: function (x) { return q(root, card, x); } };
@@ -91,17 +101,14 @@
       var chk = s.querySelector('input[type=radio][name*="conn" i]:checked,input[type=radio][name*="screen" i]:checked,input[type=radio][name*="device" i]:checked');
       if (chk && digit(chk.value)) return digit(chk.value);
       var cnt = s.querySelector('[data-conn-value],[data-connections],[data-nb],[aria-live],[class*="stepper"] [class*="val"],[class*="step"] [class*="num"],[class*="stepper"] [class*="value"],[class*="stepper"] [class*="count"],[class*="qty"] [class*="num"],[class*="qty"] [class*="value"],[class*="conn"] [class*="count"],[class*="conn"] [class*="num"],[class*="conn"] [class*="value"],[class*="conn"] output,[class*="count"][class*="conn"],[data-conn-count],[class*="screen"] [class*="count"],[class*="device"] [class*="count"]');
-      if (cnt && digit(txt(cnt) || cnt.getAttribute("data-conn-count") || cnt.getAttribute("data-connections"))) return digit(txt(cnt) || cnt.getAttribute("data-conn-count") || cnt.getAttribute("data-connections"));
+      if (cnt && digit(txt(cnt) || cnt.getAttribute("data-conn-count") || cnt.getAttribute("data-connections")) && digit(txt(cnt) || cnt.getAttribute("data-conn-count") || cnt.getAttribute("data-connections")) <= 10) return digit(txt(cnt) || cnt.getAttribute("data-conn-count") || cnt.getAttribute("data-connections"));
       var act = s.querySelector('[class*="conn"] .active,[class*="conn"] .is-active,[class*="conn"] .selected,[class*="conn"] [aria-pressed="true"],[class*="conn"] [aria-checked="true"],[class*="screen"] .active,[class*="device"] .active');
       if (act && digit(txt(act))) return digit(txt(act));
       if (root === card && card.getAttribute("data-conn") && digit(card.getAttribute("data-conn"))) return digit(card.getAttribute("data-conn"));
     }
     var up = param(href, ["conn", "connections", "connexions", "screens", "devices"]);
     if (digit(up)) return digit(up);
-    var cl = card.cloneNode(true), lis = cl.querySelectorAll("li,ul,ol");
-    for (var r = 0; r < lis.length; r++) if (lis[r].parentNode) lis[r].parentNode.removeChild(lis[r]);
-    var tm = txt(cl).match(/(\d+)\s*(devices?|screens?|connections?|connexions?|\u00e9crans?|ecrans?|verbindung(en)?|ger\u00e4te?|conexi\u00f3n|conexiones|conex\u00e3o|conex\u00f5es|connessioni|connessione|apparaten|apparaat)\b/i);
-    return tm ? parseInt(tm[1], 10) : 1;
+    return 0;
   }
 
   function param(href, names) {
@@ -131,28 +138,50 @@
     if (!w) location.href = url;
   }
 
+  function firstPlanCard() {
+    var b = document.querySelectorAll("a,button,[role=button]");
+    for (var i = 0; i < b.length; i++) {
+      if (!isBuy(b[i])) continue;
+      var c = findCard(b[i]);
+      if (c && DUR.test(txt(c)) && c.offsetParent !== null) {
+        var p = c.parentElement, top = c;
+        if (p && p.children.length >= 2) top = p;
+        return top;
+      }
+    }
+    return null;
+  }
+  var CK = window.CHECKOUT_URL || "/checkout/";
+  var KEYS = [[/excl/i, "Exclusive"], [/plat/i, "Platinum"], [/gold|\bor\b/i, "Gold"], [/bronz/i, "Bronze"]];
+  function packKey(s) { s = String(s || ""); for (var i = 0; i < KEYS.length; i++) if (KEYS[i][0].test(s)) return KEYS[i][1]; return ""; }
+  function go2(pack, n) { location.href = CK + "?pack=" + encodeURIComponent(pack || "Gold") + "&n=" + (n || 1); }
+
   window.addEventListener("click", function (e) {
     var t = e.target && e.target.closest ? e.target.closest("a,button,[role=button],input[type=submit]") : null;
-    if (!t) return;
+    if (!t || t.closest("[data-no-checkout]") || t.closest("form")) return;
     var href = t.getAttribute("href") || "";
-    var buy = isBuy(t), card = buy ? findCard(t) : null;
-    var urlPlan = buy ? param(href, ["plan", "package", "pack", "offer", "offre", "formule", "forfait", "paket", "plano"]).replace(/[-_]+/g, " ") : "";
-    if (!card && urlPlan) card = document.createElement("div");
-    if (card) {
-      var raw = urlPlan || planName(t, card);
-      var plan = raw.split(/\s+[-\u2014\u2013|\u00b7:]\s+|\s*\(/)[0].replace(STRIP, "").replace(TAIL, "").trim();
-      var dm = raw.match(DUR), dur = dm ? dm[1] + " " + dm[2].toLowerCase() : duration(card, plan);
-      if (dm && plan.replace(DUR, "").trim() === "") dur = "";
-      if (!plan && dur) { plan = dur; dur = ""; }
-      var n = connections(card, href);
-      if (n < 1 || n > 10) n = 1;
-      var msg = message(plan || "", dur, n);
-      var url = "https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(msg);
-      window.__waLast = { plan: plan, duration: dur, connections: n, url: url };
-      e.preventDefault(); e.stopImmediatePropagation();
-      if (!window.__waDry) go(url);
-      return;
+    var label = txt(t) || t.value || "";
+    if (/whats\s?app/i.test(label) || /\bwa\b|btn-wa|whatsapp/i.test(String(t.className || ""))) return;
+    if (!isBuy(t)) return;
+    if (/^#/.test(href) && !/wa\.me|checkout/.test(href) && !t.hasAttribute("data-plan") && !t.hasAttribute("data-plan-name")) return;
+    if (/^\/(?!checkout|commande|order\b|bestellung)[a-z]/i.test(href) && !/wa\.me/.test(href)) return; /* normal navigation links (e.g. to the pricing page) */
+    var card = findCard(t);
+    var urlPlan = param(href, ["plan", "package", "pack", "offer", "offre", "formule", "forfait", "paket", "plano"]);
+    var raw = urlPlan || t.getAttribute("data-plan") || t.getAttribute("data-plan-name") || (card ? planName(t, card) : "");
+    var clean = String(raw || "").replace(STRIP, "").replace(TAIL, "").trim();
+    var pack = packKey(raw) || (clean.length > 1 && clean.length < 30 ? clean : "") || (card ? packKey(txt(card).slice(0, 160)) : "");
+    if (!card && !raw) {
+      var pc = firstPlanCard();
+      if (pc) {
+        e.preventDefault(); e.stopImmediatePropagation(); window.__ckLast = { scroll: true };
+        if (!window.__waDry) { var y = pc.getBoundingClientRect().top + window.pageYOffset - 90; window.scrollTo({ top: y, behavior: "smooth" }); }
+        return;
+      }
     }
-    if (/wa\.me\/|api\.whatsapp\.com/.test(href)) { e.stopImmediatePropagation(); }
+    var n = card ? connections(card, href) : (parseInt(param(href, ["n", "conn", "connections"]), 10) || 1);
+    if (n < 1 || n > 10) n = 1;
+    window.__ckLast = { pack: pack || "Gold", n: n };
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (!window.__waDry) go2(pack, n);
   }, true);
 })();
