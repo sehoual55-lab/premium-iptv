@@ -29,7 +29,7 @@
   function isBuy(el) {
     var t = txt(el) || el.value || "";
     var h = el.getAttribute && (el.getAttribute("href") || "");
-    if (/^(mailto:|tel:|sms:)/i.test(h || "") || ((h === "/" || /^\/(index\.html)?$/.test(h || "")) && !BUY.test((el.getAttribute("aria-label") || "") + " " + t.replace(/subscribe ?iptv|iptv ?subscribe/ig, "")))) return false;
+    if (/^(mailto:|tel:|sms:)/i.test(h || "") || /^\/(index\.html)?$/.test(h || "")) return false;
     if (el.closest && el.closest("[class*=logo],a.brand,.navbar-brand,[class*=site-brand],[class*=nav-brand]") && !el.closest("[class*=card],[class*=plan],[class*=pric]")) return false;
     if (el.hasAttribute && (el.hasAttribute("aria-expanded") || el.hasAttribute("aria-controls"))) return false;
     if (el.closest && el.closest("summary,details,[class*=faq],[id*=faq],[class*=accordion],[class*=Faq],[class*=Accordion]")) return false;
