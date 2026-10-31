@@ -168,7 +168,7 @@
     var label = txt(t) || t.value || "";
     if (/whats\s?app/i.test(label) || /\bwa\b|btn-wa|whatsapp/i.test(String(t.className || ""))) return;
     if (!isBuy(t)) return;
-    if (/^#/.test(href) && !/wa\.me|checkout/.test(href) && !t.hasAttribute("data-plan") && !t.hasAttribute("data-plan-name")) return;
+    if (/^#./.test(href) && !/^#!?$/.test(href) && !/wa\.me|checkout/.test(href) && !t.hasAttribute("data-plan") && !t.hasAttribute("data-plan-name")) return;
     if (/^\/(?!checkout|commande|order\b|bestellung)[a-z]/i.test(href) && !/wa\.me/.test(href)) return; /* normal navigation links (e.g. to the pricing page) */
     var card = findCard(t);
     var urlPlan = param(href, ["plan", "package", "pack", "offer", "offre", "formule", "forfait", "paket", "plano"]);
