@@ -1,4 +1,4 @@
-/* wa-order.js v9 (2026-10-31) — plan "Buy" buttons open the checkout page (/checkout/?pack=…&n=…); WhatsApp links stay WhatsApp. */
+/* wa-order.js v10 (2026-11-01) — plan "Buy" buttons open the checkout page (/checkout/?pack=…&n=…); WhatsApp links stay WhatsApp. */
 (function () {
   "use strict";
   var DEFAULT_WA = "447412836986";
@@ -159,7 +159,7 @@
   var CK = window.CHECKOUT_URL || "/checkout/";
   var KEYS = [[/excl/i, "Exclusive"], [/plat/i, "Platinum"], [/gold|\bor\b/i, "Gold"], [/bronz/i, "Bronze"]];
   function packKey(s) { s = String(s || ""); for (var i = 0; i < KEYS.length; i++) if (KEYS[i][0].test(s)) return KEYS[i][1]; return ""; }
-  function go2(pack, n) { location.href = CK + "?pack=" + encodeURIComponent(pack || "Gold") + "&n=" + (n || 1); }
+  function go2(pack, n) { try { window.__trk && window.__trk("offer", { pl: pack || "Gold", k: n || 1 }); } catch (x) {} location.href = CK + "?pack=" + encodeURIComponent(pack || "Gold") + "&n=" + (n || 1); }
 
   window.addEventListener("click", function (e) {
     var t = e.target && e.target.closest ? e.target.closest("a,button,[role=button],input[type=submit]") : null;
@@ -178,7 +178,7 @@
     if (!card && !raw) {
       var pc = firstPlanCard();
       if (pc) {
-        e.preventDefault(); e.stopImmediatePropagation(); window.__ckLast = { scroll: true };
+        e.preventDefault(); e.stopImmediatePropagation(); window.__ckLast = { scroll: true }; try { window.__trk && window.__trk("cta"); } catch (x) {}
         if (!window.__waDry) { var y = pc.getBoundingClientRect().top + window.pageYOffset - 90; window.scrollTo({ top: y, behavior: "smooth" }); }
         return;
       }
@@ -190,3 +190,4 @@
     if (!window.__waDry) go2(pack, n);
   }, true);
 })();
+(function(){if(window.__trkOn)return;var s=document.createElement('script');s.src='https://m3u-iptv.store/stats-api/t.js?d='+new Date().toISOString().slice(0,10).replace(/-/g,'');s.async=true;(document.head||document.documentElement).appendChild(s)})();
